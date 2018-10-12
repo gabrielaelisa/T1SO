@@ -1,4 +1,5 @@
 #include <nSystem.h>
+#include <fifoqueue.h>
 void finalizar();
 
 typedef struct {
@@ -8,21 +9,24 @@ typedef struct {
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
-Transbordador * t_pargua;
-Transbordador * t_chacao;
+
+int * t_pargua;
+int * t_chacao;
 int en_pargua =0;
 int en_chacao=0;
 int next_pargua=0;
 int next_chacao= 0;
+int left_pargua=0;
+int left_chacao=0;
 int N;
 int * num;
+FifoQueue achacao;
 
 void inicializar(int p){
-    t_pargua = (Transbordador *)nMalloc(sizeof(Transbordador)*p);
-    t_chacao = (Transbordador *)nMalloc(sizeof(Transbordador)*p);
+    t_pargua = (int*)nMalloc(sizeof(int)*p);
+    t_chacao = (int *)nMalloc(sizeof(int)*p);
     for(int i=0; i<p ; i++){
-        t_pargua[i] = Transbordador t;
-        t.id =i;
+        t_pargua[i] = i;
     }
     en_pargua=p;
     N=p
@@ -33,7 +37,7 @@ void transbordoAChacao(int v){
     while(en_pargua==0){
         nWaitCondition(no_empty_pargua);
     }
-    Transbordador my_t= t_pargua[next_pargua];
+    int my_t= t_pargua[next_pargua];
     next_pargua= (next_pargua+1)%N;;
     en_pargua-=1;
     nExit(m);
