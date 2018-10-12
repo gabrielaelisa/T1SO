@@ -1,68 +1,81 @@
 #include <nSystem.h>
-#include <fifoqueue.h>
-void finalizar();
+#include <stdio.h>
+#include <fifoqueues.h>
+#include "transbordo.h"
 
 typedef struct {
     int id;
 }Transbordador;
 
+FifoQueue q_pargua;
+FifoQueue q_chacao;
+
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
 
-int * t_pargua;
-int * t_chacao;
-int en_pargua =0;
-int en_chacao=0;
-int next_pargua=0;
-int next_chacao= 0;
-int left_pargua=0;
-int left_chacao=0;
-int N;
-int * num;
-FifoQueue achacao;
-
 void inicializar(int p){
-    t_pargua = (int*)nMalloc(sizeof(int)*p);
-    t_chacao = (int *)nMalloc(sizeof(int)*p);
+    q_pargua=MakeFifoQueue();
+    q_chacao=MakeFifoQueue();
+    m= nMakeMonitor();
+    no_empty_chacao= nMakeCondition(m);
+    no_empty_pargua= nMakeCondition(m);
     for(int i=0; i<p ; i++){
-        t_pargua[i] = i;
+        Transbordador * t = nMalloc(sizeof(Transbordador));
+        t->id= i;
+        PutObj(q_pargua, t);
     }
-    en_pargua=p;
-    N=p
-
+    nPrintf("inicializa correctamente\n");
 }
 void transbordoAChacao(int v){
     nEnter(m);
-    while(en_pargua==0){
+    while(EmptyFifoQueue(q_pargua)){
         nWaitCondition(no_empty_pargua);
+        nPrintf("waiting in pargua\n");
     }
-    int my_t= t_pargua[next_pargua];
-    next_pargua= (next_pargua+1)%N;;
-    en_pargua-=1;
+    Transbordador * my_t= (Transbordador *) GetObj(q_pargua);
+    nPrintf("%d", my_t->id);
+    nPrintf("\n");
     nExit(m);
-    haciaChacao(my_t.id, v);
+    nPrintf("fue a chacao\n");
+    haciaChacao(my_t->id, v);
+    nPrintf("llego a chacao\n");
     nEnter(m);
-    t_chacao[next_chacao]= my_t;
-    en_chacao++;
-    nSignalCondition(no_empty_chacao);
+    if(EmptyFifoQueue(q_pargua)){
+        haciaPargua(my_t->id, -1);
+        PushObj(q_pargua, my_t);  
+        nSignalCondition(no_empty_pargua);
+        nPrintf("nuevo barco en pargua\n");
+    }
+    else{
+        PushObj(q_chacao,my_t);
+        nPrintf("nuevo barco en chacao\n");
+        nSignalCondition(no_empty_chacao);
+    }
     nExit(m);
+    return;
 
 }
 void transbordoAPargua(int v){
     nEnter(m);
-    while(en_chacao==0){
+    nPrintf("salio a pargua\n");
+    while(EmptyFifoQueue(q_chacao)){
         nWaitCondition(no_empty_chacao);
+        nPrintf("waiting en chacao");
     }
-    Transbordador* my_t= t_chacao[next_chacao];
-    next_chacao= (next_chacao+1)%N;;
-    en_chacao-=1;
+    Transbordador * my_t= (Transbordador *) GetObj(q_chacao);
     nExit(m);
-    haciaChacao(my_t.id, v);
+    haciaPargua(my_t->id, v);
     nEnter(m);
-    t_pargua[next_pargua]=mt_t;
-    en_pargua++;
+    PushObj(q_pargua, my_t);
     nSignalCondition(no_empty_pargua);
     nExit(m);
 
+}
+
+void finalizar(){
+    DestroyFifoQueue(q_chacao);
+    DestroyFifoQueue(q_pargua); 
+    nDestroyCondition(no_empty_chacao);
+    nDestroyCondition(no_empty_pargua);
 }
