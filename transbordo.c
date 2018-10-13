@@ -28,46 +28,50 @@ void inicializar(int p){
 }
 void transbordoAChacao(int v){
     nEnter(m);
-    while(EmptyFifoQueue(q_pargua)){
-        nPrintf("esperando\n");
-        nWaitCondition(no_empty_pargua);
-        
-    }
-    Transbordador * my_t= (Transbordador *) GetObj(q_pargua);
-    nExit(m);
-    haciaChacao(my_t->id, v);
-    if(EmptyFifoQueue(q_pargua)){
-        nPrintf("vacio");
-        haciaPargua(my_t->id, -1);
-        nEnter(m);
-        PushObj(q_pargua, my_t);  
-        nSignalCondition(no_empty_pargua);
+    Transbordador * my_t;
+    if (EmptyFifoQueue(q_pargua)){
+        my_t = (Transbordador *) GetObj(q_chacao);
+        nNotifyAll(m);
         nExit(m);
-        
+        haciaPargua(my_t->id, -1);
+        haciaChacao(my_t->id, v);
     }
     else{
-        nEnter(m);
-        PushObj(q_chacao,my_t);
-        nPrintf("nuevo barco en chacao\n");
-        nSignalCondition(no_empty_chacao);
+        my_t= (Transbordador *) GetObj(q_pargua);
+        nNotifyAll(m);
         nExit(m);
+        haciaChacao(my_t->id, v);
     }
+    nEnter(m);
+    PushObj(q_chacao,my_t);
+    nNotifyAll(m);
+    nExit(m);
 
 }
 void transbordoAPargua(int v){
     nEnter(m);
-    nPrintf("salio a pargua\n");
-    while(EmptyFifoQueue(q_chacao)){
-        nWaitCondition(no_empty_chacao);
-        nPrintf("waiting en chacao");
+    nPrintf("primer transbordo\n");
+    Transbordador * my_t;
+    if (EmptyFifoQueue(q_chacao)){
+        nPrintf("fifo vacía\n");
+        my_t = (Transbordador *) GetObj(q_pargua);
+        nPrintf("my t\n");
+        nNotifyAll(m);
+        nExit(m);
+        haciaChacao(my_t->id, -1);
+        haciaPargua(my_t->id, v);
     }
-    Transbordador * my_t= (Transbordador *) GetObj(q_chacao);
-    nExit(m);
-    haciaPargua(my_t->id, v);
+    else{
+        my_t= (Transbordador *) GetObj(q_chacao);
+        nNotifyAll(m);
+        nExit(m);
+        haciaPargua(my_t->id, v);
+    }
     nEnter(m);
-    PushObj(q_pargua, my_t);
-    nSignalCondition(no_empty_pargua);
+    PushObj(q_pargua,my_t);
+    nNotifyAll(m);
     nExit(m);
+
 
 }
 
