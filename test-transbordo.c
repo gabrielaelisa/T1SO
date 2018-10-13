@@ -43,6 +43,8 @@ int nMain( int argc, char **argv ) {
       nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
 
     /* Ahora todos los transbordadores estan en Chacao */
+
+    nPrintf("Ahora todos los transbordadores estan en Chacao\n");
     testUnTransbordoVacio(nortenoConMsg, 3, TRUE);
     testUnTransbordo(isleno, 4);
     testUnTransbordo(norteno, 5);

@@ -25,35 +25,33 @@ void inicializar(int p){
         t->id= i;
         PutObj(q_pargua, t);
     }
-    nPrintf("inicializa correctamente\n");
 }
 void transbordoAChacao(int v){
     nEnter(m);
     while(EmptyFifoQueue(q_pargua)){
+        nPrintf("esperando\n");
         nWaitCondition(no_empty_pargua);
-        nPrintf("waiting in pargua\n");
+        
     }
     Transbordador * my_t= (Transbordador *) GetObj(q_pargua);
-    nPrintf("%d", my_t->id);
-    nPrintf("\n");
     nExit(m);
-    nPrintf("fue a chacao\n");
     haciaChacao(my_t->id, v);
-    nPrintf("llego a chacao\n");
-    nEnter(m);
     if(EmptyFifoQueue(q_pargua)){
+        nPrintf("vacio");
         haciaPargua(my_t->id, -1);
+        nEnter(m);
         PushObj(q_pargua, my_t);  
         nSignalCondition(no_empty_pargua);
-        nPrintf("nuevo barco en pargua\n");
+        nExit(m);
+        
     }
     else{
+        nEnter(m);
         PushObj(q_chacao,my_t);
         nPrintf("nuevo barco en chacao\n");
         nSignalCondition(no_empty_chacao);
+        nExit(m);
     }
-    nExit(m);
-    return;
 
 }
 void transbordoAPargua(int v){
@@ -74,6 +72,7 @@ void transbordoAPargua(int v){
 }
 
 void finalizar(){
+    nPrintf("finalizar");
     DestroyFifoQueue(q_chacao);
     DestroyFifoQueue(q_pargua); 
     nDestroyCondition(no_empty_chacao);
