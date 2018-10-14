@@ -13,7 +13,6 @@ FifoQueue q_chacao;
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
-nCondition no_empty;
 volatile int esperando_en_pargua=0;
 volatile int esperando_en_chacao=0;
 
@@ -23,7 +22,6 @@ void inicializar(int p){
     m= nMakeMonitor();
     no_empty_chacao= nMakeCondition(m);
     no_empty_pargua= nMakeCondition(m);
-    no_empty= nMakeCondition(m);
     for(int i=0; i<p ; i++){
         Transbordador * t = nMalloc(sizeof(Transbordador));
         t->id= i;
@@ -122,4 +120,5 @@ void finalizar(){
     DestroyFifoQueue(q_pargua); 
     nDestroyCondition(no_empty_chacao);
     nDestroyCondition(no_empty_pargua);
+    nDestroyMonitor(m);
 }
