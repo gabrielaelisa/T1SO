@@ -33,8 +33,9 @@ void transbordoAChacao(int v){
     nPrintf("norteno toma barco\n");
     Transbordador * my_t;
 
-    while(EmptyFifoQueue(q_chacao)&& EmptyFifoQueue(q_pargua))
-        nWaitCondition(no_empty);
+    while(EmptyFifoQueue(q_chacao)&& EmptyFifoQueue(q_pargua)){
+        nPrintf("norteno esperando\n");
+        nWaitCondition(no_empty);}
 
     if (EmptyFifoQueue(q_pargua)){
         my_t = (Transbordador *) GetObj(q_chacao);
@@ -61,25 +62,25 @@ void transbordoAPargua(int v){
     nPrintf("isleno toma barco\n");
     Transbordador * my_t;
     while(EmptyFifoQueue(q_chacao)&& EmptyFifoQueue(q_pargua)){
-        nPrintf("esperando\n");
+        nPrintf("isleno esperando\n");
         nWaitCondition(no_empty);}
 
     if (EmptyFifoQueue(q_chacao)){
         my_t = (Transbordador *) GetObj(q_pargua);
         nExit(m);
-        nPrintf("exit mutex\n");
         haciaChacao(my_t->id, -1);
-        nPrintf("isleno llega a destino\n");
         haciaPargua(my_t->id, v);
+        nPrintf("isleno llega a destino\n");
     }
     else{
         my_t= (Transbordador *) GetObj(q_chacao);
         nExit(m);
-        nPrintf("isleno llega a destino\n");
         haciaPargua(my_t->id, v);
+        nPrintf("isleno llega a destino\n");
     }
     nEnter(m);
     PushObj(q_pargua,my_t);
+    nPrintf("nuevo barco en pargua\n");
     nSignalCondition(no_empty);
     nExit(m);
 
