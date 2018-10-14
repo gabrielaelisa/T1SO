@@ -9,13 +9,14 @@ typedef struct {
 
 FifoQueue q_pargua;
 FifoQueue q_chacao;
-
+nSem tr;
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
 nCondition no_empty;
 
 void inicializar(int p){
+    tr= nMakeSem(p);
     q_pargua=MakeFifoQueue();
     q_chacao=MakeFifoQueue();
     m= nMakeMonitor();
@@ -29,6 +30,7 @@ void inicializar(int p){
     }
 }
 void transbordoAChacao(int v){
+    //nWaitSem(tr);
     nEnter(m);
     nPrintf("norteno toma barco\n");
     Transbordador * my_t;
@@ -43,25 +45,29 @@ void transbordoAChacao(int v){
         haciaPargua(my_t->id, -1);
         haciaChacao(my_t->id, v);
         nPrintf("norteno llega a destino\n");
+        nSignalCondition(no_empty);
     }
     else{
         my_t= (Transbordador *) GetObj(q_pargua);
         nExit(m);
         haciaChacao(my_t->id, v);
         nPrintf("norteno llega a destino\n");
+        nSignalCondition(no_empty);
     }
     nEnter(m);
     PushObj(q_chacao,my_t);
     nPrintf("nuevo barco en chacao\n");
     nSignalCondition(no_empty);
     nExit(m);
+    //nSignalSem(tr);
 
 }
 void transbordoAPargua(int v){
+    //nWaitSem(tr);
     nEnter(m);
     nPrintf("isleno toma barco\n");
     Transbordador * my_t;
-    while(EmptyFifoQueue(q_chacao)&& EmptyFifoQueue(q_pargua)){
+    while(EmptyFifoQueue(q_pargua) && EmptyFifoQueue(q_chacao)){
         nPrintf("isleno esperando\n");
         nWaitCondition(no_empty);}
 
@@ -71,20 +77,22 @@ void transbordoAPargua(int v){
         haciaChacao(my_t->id, -1);
         haciaPargua(my_t->id, v);
         nPrintf("isleno llega a destino\n");
+        nSignalCondition(no_empty);
     }
     else{
         my_t= (Transbordador *) GetObj(q_chacao);
         nExit(m);
         haciaPargua(my_t->id, v);
         nPrintf("isleno llega a destino\n");
+        nSignalCondition(no_empty);
     }
+    
     nEnter(m);
     PushObj(q_pargua,my_t);
     nPrintf("nuevo barco en pargua\n");
     nSignalCondition(no_empty);
     nExit(m);
-
-
+    //nSignalSem(tr);
 }
 
 void finalizar(){
