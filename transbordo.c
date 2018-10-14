@@ -49,6 +49,7 @@ void transbordoAChacao(int v){
         if (!(EmptyFifoQueue(q_chacao) && (waiting_in_chacao>0)))
         {
             my_t = (Transbordador *) GetObj(q_chacao);
+            nNotifyAll(m);
             nExit(m);
             haciaPargua(my_t->id, -1);
             haciaChacao(my_t->id, v);
@@ -56,7 +57,7 @@ void transbordoAChacao(int v){
             nEnter(m);
             waiting_in_pargua-=1;
             PushObj(q_chacao,my_t);
-            //nNotifyAll(m);
+            nNotifyAll(m);
             nExit(m);
            
         }
@@ -66,6 +67,7 @@ void transbordoAChacao(int v){
         
     }
     my_t= (Transbordador *) GetObj(q_pargua);
+    nNotifyAll(m);
     nExit(m);
 
     haciaChacao(my_t->id, v);
@@ -87,6 +89,7 @@ void transbordoAPargua(int v){
 
         if (!(EmptyFifoQueue(q_pargua) && (waiting_in_pargua>0))){
             my_t = (Transbordador *) GetObj(q_pargua);
+            nNotifyAll(m);
             nExit(m);
             haciaChacao(my_t->id, -1);
             haciaPargua(my_t->id, v);
@@ -94,7 +97,7 @@ void transbordoAPargua(int v){
             nEnter(m);
             waiting_in_chacao-=1;
             PushObj(q_pargua,my_t);
-            //nNotifyAll(m);
+            nNotifyAll(m);
             nExit(m);
             }
 
@@ -104,6 +107,7 @@ void transbordoAPargua(int v){
     }
 
     my_t= (Transbordador *) GetObj(q_chacao);
+    nNotifyAll(m);
     nExit(m);
     haciaPargua(my_t->id, v);
 
