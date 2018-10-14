@@ -13,7 +13,6 @@ FifoQueue q_chacao;
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
-nCondition no_empty;
 volatile int esperando_en_pargua=0;
 volatile int esperando_en_chacao=0;
 
@@ -73,7 +72,7 @@ void transbordoAPargua(int v){
     nPrintf("isleno pide barco\n");
     Transbordador * my_t;
     // mi puerto está vacío y el otro puerto también o alguien espera
-    while(EmptyFifoQueue(q_chacao))
+    while(EmptyFifoQueue(q_chacao)){
         if !(EmptyFifoQueue(q_pargua)&& esperando_en_pargua>0)){
 
             my_t = (Transbordador *) GetObj(q_pargua);
@@ -88,7 +87,7 @@ void transbordoAPargua(int v){
             PushObj(q_pargua,my_t);
             nPrintf("isleno llega a destino\n");
             nPrintf("nuevo barco en pargua\n");
-            nSignalCondition(no_empty);
+            nSignalCondition(no_empty_pargua);
             nExit(m);
         
         }
@@ -96,6 +95,7 @@ void transbordoAPargua(int v){
             nPrintf("isleno esperando\n");
             nWaitCondition(no_empty_chacao)
         }
+    }
         
     my_t= (Transbordador *) GetObj(q_chacao);
     esperando_en_chacao-=1;
@@ -108,7 +108,7 @@ void transbordoAPargua(int v){
     PushObj(q_pargua,my_t);
     nPrintf("isleno llega a destino\n");
     nPrintf("nuevo barco en pargua\n");
-    nSignalCondition(no_empty);
+    nSignalCondition(no_empty_pargua);
     nExit(m);
 }
 
