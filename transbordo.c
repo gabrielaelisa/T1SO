@@ -13,6 +13,7 @@ FifoQueue q_chacao;
 nMonitor m ;//= nMakeMonitor();
 nCondition no_empty_pargua;//  = nMakeCondition(m);
 nCondition no_empty_chacao;// = nMakeCondition(m);
+nCondition no_empty;
 volatile int esperando_en_pargua=0;
 volatile int esperando_en_chacao=0;
 
@@ -37,7 +38,7 @@ void transbordoAChacao(int v){
     // mi puerto está vacío y el otro puerto también o alguien espera
     while(EmptyFifoQueue(q_pargua) && (EmptyFifoQueue(q_chacao) || esperando_en_chacao>0)){
         nPrintf("norteno esperando\n");
-        nWaitCondition(no_empty);
+        nWaitCondition(no_empty_pargua);
         }
 
     if (EmptyFifoQueue(q_pargua)){
@@ -53,7 +54,6 @@ void transbordoAChacao(int v){
         my_t= (Transbordador *) GetObj(q_pargua);
         esperando_en_pargua-=1;
         nPrintf("norteno recibe barco\n");
-        nNotifyAll(m);
         nExit(m);
         haciaChacao(my_t->id, v);
         nPrintf("norteno llega aun no avisa\n");
@@ -62,7 +62,7 @@ void transbordoAChacao(int v){
     PushObj(q_chacao,my_t);
     nPrintf("norteno llega a destino\n");
     nPrintf("nuevo barco en chacao\n");
-    nSignalCondition(no_empty);
+    nSignalCondition(no_empty_chacao);
     nExit(m);
 
 }
@@ -72,44 +72,38 @@ void transbordoAPargua(int v){
     nPrintf("isleno pide barco\n");
     Transbordador * my_t;
     // mi puerto está vacío y el otro puerto también o alguien espera
-    while(EmptyFifoQueue(q_chacao)){
-        if !(EmptyFifoQueue(q_pargua)&& esperando_en_pargua>0)){
+    while(EmptyFifoQueue(q_chacao) && (EmptyFifoQueue(q_pargua)|| esperando_en_pargua>0)){
+        nPrintf("isleno esperando\n");
+        nWaitCondition(no_empty_chacao);}
 
-            my_t = (Transbordador *) GetObj(q_pargua);
-            esperando_en_chacao-=1;
-            nExit(m);
-            nPrintf("isleno toma barco\n");
-            haciaChacao(my_t->id, -1);
-            haciaPargua(my_t->id, v);
-            nPrintf("isleno llega aun no avisa\n");
-
-            nEnter(m);
-            PushObj(q_pargua,my_t);
-            nPrintf("isleno llega a destino\n");
-            nPrintf("nuevo barco en pargua\n");
-            nSignalCondition(no_empty_pargua);
-            nExit(m);
+    nPrintf("isleno deja de esperar\n");
+    if (EmptyFifoQueue(q_chacao)){
         
-        }
-        else{
-            nPrintf("isleno esperando\n");
-            nWaitCondition(no_empty_chacao)
-        }
+        my_t = (Transbordador *) GetObj(q_pargua);
+        esperando_en_chacao-=1;
+        nExit(m);
+        nPrintf("isleno toma barco\n");
+        haciaChacao(my_t->id, -1);
+        haciaPargua(my_t->id, v);
+        nPrintf("isleno llega aun no avisa\n");
     }
+    else{
         
-    my_t= (Transbordador *) GetObj(q_chacao);
-    esperando_en_chacao-=1;
-    nExit(m);
-    nPrintf("isleno toma barco\n");
-    haciaPargua(my_t->id, v);
-    nPrintf("isleno llega aun no avisa\n");
-    
+        my_t= (Transbordador *) GetObj(q_chacao);
+        esperando_en_chacao-=1;
+        nExit(m);
+        nPrintf("isleno toma barco\n");
+        haciaPargua(my_t->id, v);
+        nPrintf("isleno llega aun no avisa\n");
+    }
     nEnter(m);
     PushObj(q_pargua,my_t);
     nPrintf("isleno llega a destino\n");
     nPrintf("nuevo barco en pargua\n");
     nSignalCondition(no_empty_pargua);
     nExit(m);
+
+
 }
 
 void finalizar(){
