@@ -108,6 +108,16 @@ void transbordoAPargua(int v){
 
 void finalizar(){
     nPrintf("finalizar");
+    while(!EmptyFifoQueue(q_chacao))
+    {
+        Transbordador *t= (Transbordador *) GetObj(q_chacao);
+        nFree(t);
+    }
+      while(!EmptyFifoQueue(q_pargua))
+    {
+        Transbordador *t= (Transbordador *) GetObj(q_pargua);
+        nFree(t);
+    }
     DestroyFifoQueue(q_chacao);
     DestroyFifoQueue(q_pargua); 
     nDestroyCondition(no_empty_chacao);
