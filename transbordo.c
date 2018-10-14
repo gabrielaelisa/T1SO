@@ -3,34 +3,25 @@
 #include <fifoqueues.h>
 #include "transbordo.h"
 
-typedef struct {
-    int id;
-}Transbordador;
 
-FifoQueue q_pargua;
-FifoQueue q_chacao;
 
-nMonitor m ;//= nMakeMonitor();
-nCondition no_empty_pargua;//  = nMakeCondition(m);
-nCondition no_empty_chacao;// = nMakeCondition(m);
-nCondition no_empty;
 
+nSem * b_pargua;
+nSem * b_chacao;
+int * transbordador;
+volatile int k;
 void inicializar(int p){
-    q_pargua=MakeFifoQueue();
-    q_chacao=MakeFifoQueue();
-    m= nMakeMonitor();
-    no_empty_chacao= nMakeCondition(m);
-    no_empty_pargua= nMakeCondition(m);
-    no_empty= nMakeCondition(m);
+    
     for(int i=0; i<p ; i++){
-        Transbordador * t = nMalloc(sizeof(Transbordador));
-        t->id= i;
-        PutObj(q_pargua, t);
+      b_pargua[i]=nMakeSem(1);
+      b_chacao[i]= nMakeSem(1);
+      transbordador[i]=i
     }
+    k=p-1;
 }
 void transbordoAChacao(int v){
-    nEnter(m);
-    nPrintf("norteno toma barco\n");
+    nWaitSem(b_pargua[v%k]);
+    
     Transbordador * my_t;
 
     while(EmptyFifoQueue(q_chacao)&& EmptyFifoQueue(q_pargua))
