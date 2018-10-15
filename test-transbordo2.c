@@ -74,29 +74,41 @@ int nMain( int argc, char **argv ) {
 
     Viaje *viajea= esperarTransbordo();
     Viaje *viajeb= esperarTransbordo();
+    
     _Bool esta_en_chacao=FALSE;
-    if(viajeb->v==0)
+    if(viajea->v==0)
       esta_en_chacao=TRUE;
 
     if (viajea->i== viajeb->i)
       nFatalError("nMain", "v 1 debio pedir otro transbordador vacio\n");
-    continuarTransbordo(viajeb);
     continuarTransbordo(viajea);
-    nTask t2= nEmitTask(isleno,0);
-    nTask t3= nEmitTask(norteno, 1);
-  
-    viajeb= esperarTransbordo();
+    continuarTransbordo(viajeb);
+
+    nTask t2= nEmitTask(isleno,2);
+    //nTask t3= nEmitTask(norteno, 1);
+
+    //viajeb= esperarTransbordo();
     viajea= esperarTransbordo();
+   
+    //nPrintf("%d\n", viajeb->v);
+    nPrintf( "%d\n", viajea->v);
+  
+    if (esta_en_chacao && viajea->v!=2)
+       nFatalError("nMain", "debio llevar al vehiculo 2\n");
 
-    if(esta_en_chacao && viajeb->v!=0){
-      nFatalError("nMain", "viajeb debio tomar el vehiculo 0\n");
-    }
- 
-    continuarTransbordo(viajeb);
+   
+   // continuarTransbordo(viajeb);
     continuarTransbordo(viajea);
-    nPrintf("aqui funciona\n");
 
-    nWaitTask(t0); nWaitTask(t1); nWaitTask(t2); nWaitTask(t3);
+    nWaitTask(t0);
+    nPrintf("wait task0\n");
+    nWaitTask(t1);
+    nPrintf("wait task1\n");
+    nWaitTask(t2);
+    nPrintf("wait task2\n");
+    //nWaitTask(t3);
+    nPrintf("wait task3\n");
+    
   }
 
   {
