@@ -33,118 +33,83 @@ int nMain( int argc, char **argv ) {
   ctrl= nCurrentTask();
   inicializar(3);
   verificar= TRUE;
-  nPrintf("Test 1: se transbordan 3 vehiculos a chacao secuencialmente\n");
-  // testUnTransbordo: se invoca cuando debe haber un transbordador
-  //   disponible en la misma orilla del vehiculo
-  // testUnTransbordoVacio: se invoca cuando no debe haber ningun
-  //   transbordador disponible en la misma orilla del vehiculo
-  for (k=0; k<10; k++)
-  { // Se transbordan 3 vehiculos a Chacao secuencialmente
-    // No pueden haber transbordos sin vehiculo
-    int i0= testUnTransbordo(norteno, 0); // entrega el transbordador usado
+  nPrintf("miTest 1: hay 3 transbordadores se transbordan 2 vehiculos a chacao secuencialmente\n");
+  { /* Se transbordan 2 vehiculos a Chacao secuencialmente */
+    int i0= testUnTransbordo(norteno, 0); /* entrega el transbordador usado */
     int i1= testUnTransbordo(norteno, 1);
-    int i2= testUnTransbordo(norteno, 2);
-    if (i0==i1 || i1==i2 || i0==i2)
+    if (i0==i1)
       nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
-
-    // Ahora todos los transbordadores estan en Chacao
-    // Este transbordo hacia Chacao requiere traer transbordador vacio a Pargua
-    testUnTransbordoVacio(nortenoConMsg, 3, TRUE);
-    // Estos dos transbordos no requieren viajes sin vehiculo
-    testUnTransbordo(isleno, 4);
-    testUnTransbordo(norteno, 5);
-    // Todos los transbordadores estan en Chacao
-
-    i0= testUnTransbordo(isleno, 0); // entrega el transbordador usado
-    i1= testUnTransbordo(isleno, 1);
-    i2= testUnTransbordo(isleno, 2);
-    if (i0==i1 || i1==i2 || i0==i2)
-      nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
-
-    // Todos los transbordadores estan en Pargua
-    // Este transbordo hacia Pargua requiere traer transbordador vacio a Chacao
+    /* Ahora hay 2 transbordadores en chacao y 1 en pargua*/
+    int i2= testUnTransbordo(isleno, 2);
+    int i3= testUnTransbordo(isleno, 3);
+    if(i2!=i0 && i3!=i0){
+      nFatalError("nMain", "alguno de los vehiculos debio salir en un transbordador  que llego de pargua\n");
+    }
+  }
+  finalizar();
+  inicializar(2);
+  nPrintf("miTest 2: hay 2 transbordadores se transbordan vehiculos secuencialmente\n");
+  for(k=0; k<5; k++){
+    // un transborador en cada orilla
+    int i1= testUnTransbordo(norteno, 1);
+    int i0= testUnTransbordo(isleno, 0);
+    
+    if (i0!=i1)
+      nFatalError("nMain", "Los transbordadores deben ser iguales\n");
+    
     testUnTransbordoVacio(islenoConMsg, 3, FALSE);
-    // Estos dos transbordos no requieren viajes sin vehiculo
-    testUnTransbordo(norteno, 4);
-    testUnTransbordo(isleno, 5);
+    testUnTransbordo(norteno, 0);
+    testUnTransbordo(norteno, 2);
+    testUnTransbordo(isleno, 1);
+    testUnTransbordo(isleno, 2);
+
   }
-
-  // Todos los transbordadores estan en Pargua
-
-  { // Se transbordan 4 vehiculos a Chacao en paralelo
-    nPrintf("Test 2: se transbordan 4 vehiculos a Chacao en paralelo\n");
+  finalizar();
+  
+  inicializar(3);
+  { 
+    nPrintf("miTest 3: hay 3 transbordadores, 1 debe estar quieto, y 2 vehiculos 1 en cada orilla\n");
     nTask t0= nEmitTask(norteno, 0);
-    nTask t1= nEmitTask(norteno, 1);
-    nTask t2= nEmitTask(norteno, 2);
-    nTask t3, t4, t5, t6, t7;
-    // Lea atentamente los comentarios de esperarTransbordo y
-    // continuarTransbordo al final de este archivo.
-    // La funcion esperarTransbordo espera a que su implementacion de
-    // transbordoAChacao gatille la llamada a haciaChacao.
+    nTask t1= nEmitTask(isleno, 1);
+    nTask t2, t3;
     Viaje *viajea= esperarTransbordo();
-    // Ok, la invocacion de haciaChacao ocurrio.  Pero ahora haciaChacao
-    // espera que nMain invoque continuarTransbordo(viajea) para poder
-    // retornar
-    Viaje *viajeb= esperarTransbordo(); // Espera llamada a haciaChacao
-    Viaje *viajec= esperarTransbordo(); // Espera llamada a haciaChacao
-    // Todos los transbordadores van haciaChacao.  Cada viaje llegara
-    // a Chacao cuando nMain invoque continuarTransbordo(viaje).
-    if (viajea->i==viajeb->i || viajeb->i==viajec->i || viajea->i==viajec->i)
-      nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
-    t3= nEmitTask(isleno, 3); // No hay transbordadores, debe esperar
-    if ((Viaje*)nReceive(NULL, 1)!=NULL)
-      nFatalError("nMain", "De donde salio un transbordador adicional?\n");
-    // Se invoca continuarTransbordo(viajeb) lo que significa que ese
-    // transbordador llego a Chacao.  Esto se traduce en que la funcion
-    // haciaChacao que lleva el vehiculo viajeb->v retorne.
-    // Esto permite que su implementacion de transbordoAChacao tambien retorne.
+    Viaje *viajeb= esperarTransbordo();
+    
+    _Bool esta_en_chacao=FALSE;
+    if(viajea->v==0)
+      esta_en_chacao=TRUE;
+
+    if (viajea->i== viajeb->i)
+      nFatalError("nMain", "v 1 debio pedir otro transbordador vacio\n");
+    continuarTransbordo(viajea);
     continuarTransbordo(viajeb);
-    // Se acaba de liberar un transbordador.  Servira para el vehiculo 3.
-    viajeb= esperarTransbordo(); // Espera nueva llamada a haciaChacao
-    if (viajeb->v!=3)
-      nFatalError("nMain", "Aca debio haber viajado el vehiculo 3\n");
-    // 4 nuevos vehiculos esperan transbordo
-    t4= nEmitTask(isleno, 4);
-    nSleep(100);     // Esto es para asegurarme de que se inicien en este orden
-    t5= nEmitTask(norteno, 5);
-    nSleep(100);
-    t6= nEmitTask(norteno, 6);
-    nSleep(100);
-    t7= nEmitTask(isleno, 7);
-    // Hay 3 transbordos en progreso (probablemente vehiculos 0, 2 y 3)
-    // y 4 en cola
-    continuarTransbordo(viajea); // Termina transbordo, libera transbordador.
-    viajea= esperarTransbordo(); // Puede ser un transbordo vacio
-    if (viajea->v==-1) {
-      continuarTransbordo(viajea);
-      viajea= esperarTransbordo(); // No puede ser un transbordo vacio.
-    }
-    continuarTransbordo(viajec); // Termina transbordo, libera transbordador
-    viajec= esperarTransbordo(); // Puede ser un transbordo vacio
-    if (viajec->v==-1) {
-      continuarTransbordo(viajec);
-      viajec= esperarTransbordo();  // No puede ser un transbordo vacio
-    }
-    continuarTransbordo(viajeb); // Termina transbordo, libera transbordador
-    viajeb= esperarTransbordo(); // Puede ser un transbordo vacio
-    if (viajeb->v==-1) {
-      continuarTransbordo(viajeb);
-      viajeb= esperarTransbordo(); // No puede ser un transbordo vacio
-    }
-    continuarTransbordo(viajec); // Termina transbordo, libera transbordador
-    viajec= esperarTransbordo(); // Puede ser un transbordo vacio
-    if (viajec->v==-1) {
-      continuarTransbordo(viajec);
-      viajec= esperarTransbordo(); // No puede ser un transbordo vacio
-    }
-    continuarTransbordo(viajea); // Termina transbordo
-    continuarTransbordo(viajeb); // Termina transbordo
-    continuarTransbordo(viajec); // Termina transbordo
 
-    nWaitTask(t0); nWaitTask(t1); nWaitTask(t2); nWaitTask(t3);
-    nWaitTask(t4); nWaitTask(t5); nWaitTask(t6); nWaitTask(t7);
+    nTask t2= nEmitTask(isleno,2);
+    //nTask t3= nEmitTask(norteno, 1);
+
+    //viajeb= esperarTransbordo();
+    viajea= esperarTransbordo();
+   
+    //nPrintf("%d\n", viajeb->v);
+    nPrintf( "%d\n", viajea->v);
+  
+    if (esta_en_chacao && viajea->v!=2)
+       nFatalError("nMain", "debio llevar al vehiculo 2\n");
+
+   
+   // continuarTransbordo(viajeb);
+    continuarTransbordo(viajea);
+
+    nWaitTask(t0);
+    nPrintf("wait task0\n");
+    nWaitTask(t1);
+    nPrintf("wait task1\n");
+    nWaitTask(t2);
+    nPrintf("wait task2\n");
+    //nWaitTask(t3);
+    nPrintf("wait task3\n");
+    
   }
-
   // Algunos transbordadores en Pargua y otros en Chacao
 
   {
