@@ -66,48 +66,35 @@ int nMain( int argc, char **argv ) {
   }
   finalizar();
   
-  inicializar(3);
+  inicializar(2);
   { 
-    nPrintf("miTest 3: hay 3 transbordadores, 1 debe estar quieto, y 2 vehiculos 1 en cada orilla\n");
+    nPrintf("miTest 3: hay 2 transbordadores, y 2 vehiculos 1 en cada orilla\n");
     nTask t0= nEmitTask(norteno, 0);
-    nTask t1= nEmitTask(isleno, 1);
-    nTask t2, t3;
     Viaje *viajea= esperarTransbordo();
-    Viaje *viajeb= esperarTransbordo();
-    
-    _Bool esta_en_chacao=FALSE;
-    if(viajea->v==0)
-      esta_en_chacao=TRUE;
-
-    if (viajea->i== viajeb->i)
-      nFatalError("nMain", "v 1 debio pedir otro transbordador vacio\n");
+    nTask t1= nEmitTask(isleno, 1);
+    nTask t2;
     continuarTransbordo(viajea);
+    Viaje *viajeb= esperarTransbordo();
+
+    if (viajea->i!= viajeb->i)
+      nFatalError("nMain", "v 1 debio haber sido transbordado en el transbordador que llego a chacao\n");
+    
     continuarTransbordo(viajeb);
+    //ahora los dos transbordadores esta en pargua
+    t2= nEmitTask(isleno,1)
 
-    nTask t2= nEmitTask(isleno,2);
-    //nTask t3= nEmitTask(norteno, 1);
-
-    //viajeb= esperarTransbordo();
+    //no hay barcos en Chacao, asique debe pedir uno vacío
     viajea= esperarTransbordo();
-   
-    //nPrintf("%d\n", viajeb->v);
-    nPrintf( "%d\n", viajea->v);
-  
-    if (esta_en_chacao && viajea->v!=2)
-       nFatalError("nMain", "debio llevar al vehiculo 2\n");
-
-   
-   // continuarTransbordo(viajeb);
+    // es un transbordo vacio
+    if (viajea->v==-1) {
+      continuarTransbordo(viajea);
+      viajea= esperarTransbordo(); 
+    }
     continuarTransbordo(viajea);
 
     nWaitTask(t0);
-    nPrintf("wait task0\n");
     nWaitTask(t1);
-    nPrintf("wait task1\n");
     nWaitTask(t2);
-    nPrintf("wait task2\n");
-    //nWaitTask(t3);
-    nPrintf("wait task3\n");
     
   }
   // Algunos transbordadores en Pargua y otros en Chacao

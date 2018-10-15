@@ -66,53 +66,98 @@ int nMain( int argc, char **argv ) {
   }
   finalizar();
   
-  inicializar(3);
+  inicializar(2);
   { 
-    nPrintf("miTest 3: hay 3 transbordadores, 1 debe estar quieto, y 2 vehiculos 1 en cada orilla\n");
+    nPrintf("miTest 3: hay 2 transbordadores, y 2 vehiculos 1 en cada orilla\n");
     nTask t0= nEmitTask(norteno, 0);
-    nTask t1= nEmitTask(isleno, 1);
-
     Viaje *viajea= esperarTransbordo();
+    continuarTransbordo(viajea);
+    nSleep(100); 
+    nTask t1= nEmitTask(isleno, 1);
+    nSleep(100); 
+    nTask t2;
     Viaje *viajeb= esperarTransbordo();
-    
-    _Bool esta_en_chacao=FALSE;
-    if(viajea->v==0)
-      esta_en_chacao=TRUE;
 
     if (viajea->i== viajeb->i)
-      nFatalError("nMain", "v 1 debio pedir otro transbordador vacio\n");
-    continuarTransbordo(viajea);
+      nFatalError("nMain", "no pueden ir en el mismo transbordador\n");
+    
     continuarTransbordo(viajeb);
+    //ahora los dos transbordadores esta en pargua
+    t2= nEmitTask(isleno,1);
 
-    nTask t2= nEmitTask(isleno,2);
-    //nTask t3= nEmitTask(norteno, 1);
-
-    //viajeb= esperarTransbordo();
+    //no hay barcos en Chacao, asique debe pedir uno vacío
     viajea= esperarTransbordo();
-   
-    //nPrintf("%d\n", viajeb->v);
-    nPrintf( "%d\n", viajea->v);
-  
-    if (esta_en_chacao && viajea->v!=2)
-       nFatalError("nMain", "debio llevar al vehiculo 2\n");
-
-   
-   // continuarTransbordo(viajeb);
+    // es un transbordo vacio
+    if (viajea->v==-1) {
+      continuarTransbordo(viajea);
+      viajea= esperarTransbordo(); 
+    }
     continuarTransbordo(viajea);
 
     nWaitTask(t0);
-    nPrintf("wait task0\n");
     nWaitTask(t1);
-    nPrintf("wait task1\n");
     nWaitTask(t2);
-    nPrintf("wait task2\n");
-    //nWaitTask(t3);
-    nPrintf("wait task3\n");
     
   }
+  finalizar();
+  nPrintf("miTest 4: hay 4 transbordadores, y muchos vehiculos\n");
 
+  inicializar(4);
   {
-#define T 300
+    nTask t0= nEmitTask(isleno, 0);
+    nTask t1= nEmitTask(isleno, 1);
+    nTask t2= nEmitTask(isleno, 2);
+    nTask t3= nEmitTask(isleno, 3);
+    Viaje *viajea= esperarTransbordo();
+    Viaje *viajeb= esperarTransbordo();
+    Viaje *viajec= esperarTransbordo();
+    Viaje *viajed= esperarTransbordo();
+    nTask t4= nEmitTask(norteno, 4);
+    if ((Viaje*)nReceive(NULL, 1)!=NULL)
+      nFatalError("nMain", "De donde salio un transbordador adicional?\n");
+
+    if (viajea->v==-1) {
+      continuarTransbordo(viajea);
+      viajea= esperarTransbordo();
+    }
+    continuarTransbordo(viajea);
+    //toma vehiculo norteno
+    viajea=esperarTransbordo();
+    if (viajea->v==-1)
+       nFatalError("nMain", "debio tomar al vehiculo norteno\n");
+    continuarTransbordo(viajea);
+
+    if (viajeb->v==-1) {
+      continuarTransbordo(viajeb);
+      viajeb= esperarTransbordo();
+    }
+    continuarTransbordo(viajeb);
+
+    if (viajec->v==-1) {
+      continuarTransbordo(viajec);
+      viajec= esperarTransbordo();
+    }
+    continuarTransbordo(viajec);
+
+    if (viajed->v==-1) {
+      continuarTransbordo(viajed);
+      viajed= esperarTransbordo();
+    }
+    continuarTransbordo(viajed);
+    
+
+    nWaitTask(t0);
+    nWaitTask(t1);
+    nWaitTask(t2);
+    nWaitTask(t3);
+    nWaitTask(t4);
+  }
+
+  finalizar();
+  // Algunos transbordadores en Pargua y otros en Chacao
+  inicializar(3);
+  {
+#define T 600
     nTask tasks[T];
     int t;
     nPrintf("Test de esfuerzo.  Se demora bastante!\n");
@@ -140,6 +185,10 @@ int nMain( int argc, char **argv ) {
 }
 
 int testUnTransbordo(int (*tipo)(), int v) {
+  // Precondicion: hay transbordadores disponibles en la misma orilla
+  // del vehiculo v.
+  // Embarca, transborda y desembarca vehiculo v.  Retorna el transbordador
+  // usado que queda estacionado en la otra orilla.
   nTask vehiculoTask= nEmitTask(tipo, v); /* vehiculo v */
   Viaje *viaje= esperarTransbordo();
   int i= viaje->i; /* el transbordador usado */
@@ -153,6 +202,11 @@ int testUnTransbordo(int (*tipo)(), int v) {
 }
 
 int testUnTransbordoVacio(int (*tipo)(), int v, int haciaChacao) {
+  // Precondicion: *no* hay transbordadores disponibles en la misma orilla
+  // del vehiculo v.
+  // Embarca, transborda y desembarca vehiculo v.  Retorna el transbordador
+  // usado que queda estacionado en la otra orilla.
+  // Verifica que un transbordador hizo un viaje vacio.
   nTask t;
   nTask vehiculoTask= nEmitTask(tipo, v); /* vehiculo v */
   Viaje *viaje= esperarTransbordo(); /* Este viaje no lleva auto */
@@ -211,11 +265,13 @@ int islenoConMsg(int v) {
   Viaje falso;
   falso.v= 1000;
   transbordoAPargua(v);
-  /* Si transbordoAPargua retorna antes de invocar haciaPargua, este
-     mensaje va hacer fallar los tests */
+  // Si transbordoAPargua retorna antes de invocar haciaPargua, este
+  // mensaje va hacer fallar los tests
   return nSend(ctrl, &falso);
 }
 
+// haciaChacao: Ud. invoca esta funcion en transbordo.c cuando se invoca
+// transbordoAChacao.
 void haciaChacao(int i, int v) {
   if (!verificar)
     achacao++;
@@ -224,30 +280,49 @@ void haciaChacao(int i, int v) {
     viaje.i= i;
     viaje.v= v;
     viaje.haciaChacao= TRUE;
+    // Notifica al nMain que se invoco haciaChacao.  El vehiculo v va
+    // hacia Chacao.  Llegara cuando nMain invoque continuarTransbordo(&viaje).
     nSend(ctrl, &viaje);
+    // Ahora si se desembarco v.  La funcion retorna con lo que
+    // transbordoAChacao puede retornar.
   }
 }
 
+
+// haciaPargua: Ud. invoca esta funcion en transbordo.c cuando se invoca
+// transbordoAPargua.
 void haciaPargua(int i, int v) {
   if (!verificar)
-    apargua++;
+    apargua++;  // Solo valido para el test de esfuerzo
   else {
     Viaje viaje;
     viaje.i= i;
     viaje.v= v;
     viaje.haciaChacao= FALSE;
+    // Notifica al nMain que se invoco haciaPargua.  El vehiculo v va
+    // hacia Pargua.  Llegara cuando nMain invoque continuarTransbordo(&viaje).
     nSend(ctrl, &viaje);
+    // Termino el transbordo.  La funcion retorna con lo que
+    // transbordoAPargua puede retornar.
   }
 }
 
 Viaje *esperarTransbordo() {
   nTask t;
+  // Espera la notificacion del inicio de cualquier transbordo llamando
+  // haciaPargua o haciaChacao.
+  // Retorna en viaje el transbordador usado y el vehiculo que lleva.
   Viaje *viaje= nReceive(&t, -1);
   viaje->t= t;
   return viaje;
 }
 
 void continuarTransbordo(Viaje *viaje) {
+  // Invocada por nMain.
+  // Hace que termine el transbordo de viaje->i con el vehiculo viaje->v.
+  // Ese transbordador llego a la orilla y por lo tanto la
+  // llamada a haciaPargua o haciaChacao retorna.  El transbordador queda
+  // libre para otro viaje.
   nReply(viaje->t, 0);
 }
 
