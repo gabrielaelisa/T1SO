@@ -33,41 +33,43 @@ int nMain( int argc, char **argv ) {
   ctrl= nCurrentTask();
   inicializar(3);
   verificar= TRUE;
-  nPrintf("miTest 1: hay 3 transbordadores \n
-   se transbordan 2 vehiculos a chacao secuencialmente");
-  for (k=0; k<10; k++)
+  nPrintf("miTest 1: hay 3 transbordadores se transbordan 2 vehiculos a chacao secuencialmente\n");
   { /* Se transbordan 2 vehiculos a Chacao secuencialmente */
     int i0= testUnTransbordo(norteno, 0); /* entrega el transbordador usado */
+    //nPrintf("%d\n", i0);
     int i1= testUnTransbordo(norteno, 1);
+    //nPrintf("%d\n", i1);
     if (i0==i1)
       nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
-
-    /* Ahora hay 2 transbordadores en chacao y 1 en pargua */
+    /* Ahora hay 2 transbordadores en chacao y 1 en pargua*/
     int i2= testUnTransbordo(isleno, 2);
     int i3= testUnTransbordo(isleno, 3);
-    int i4= testUnTransbordo(isleno, 4);
-    if(i2!=i0 && i3!=i0 && i4!= i0)
-       nFatalError("nMain", "alguno de los vehiculos debio salir en un 
-       transbordador  que llego de pargua\n");
-    /*
-    testUnTransbordoVacio(nortenoConMsg, 3, TRUE);
-    testUnTransbordo(isleno, 4);
-    testUnTransbordo(norteno, 5);
-
-    i0= testUnTransbordo(isleno, 0); /* entrega el transbordador usado */
-    /*
-    i1= testUnTransbordo(isleno, 1);
-    i2= testUnTransbordo(isleno, 2);
-    if (i0==i1 || i1==i2 || i0==i2)
-      nFatalError("nMain", "Los transbordadores debieron ser distintos\n");
-
-    /* Ahora todos los transbordadores estan en Pargua */
-    /*
-    testUnTransbordoVacio(islenoConMsg, 3, FALSE);
-    testUnTransbordo(norteno, 4);
-    testUnTransbordo(isleno, 5);*/
-    
+    if(i2!=i0 && i3!=i0){
+      nFatalError("nMain", "alguno de los vehiculos debio salir en un transbordador  que llego de pargua\n");
+    }
   }
+  finalizar();
+  inicializar(2);
+  nPrintf("miTest 2: hay 2 transbordadores se transbordan vehiculos secuencialmente");
+  for(k=0; k<5; k++){
+    // un transborador en cada orilla
+    int i1= testUnTransbordo(norteno, 1);
+    int i0= testUnTransbordo(isleno, 0);
+    
+    if (i0!=i1)
+      nFatalError("nMain", "Los transbordadores debien ser iguales\n");
+    
+    testUnTransbordoVacio(islenoConMsg, 3, FALSE);
+    testUnTransbordo(norteno, 0);
+    testUnTransbordo(norteno, 2);
+    testUnTransbordo(isleno, 1);
+    testUnTransbordo(isleno, 2);
+
+
+
+  }
+  
+    
   { /* Se transbordan 4 vehiculos a Chacao en paralelo */
     nPrintf("Test 2: se transbordan 4 vehiculos a Chacao en paralelo\n");
     nTask t0= nEmitTask(norteno, 0);
@@ -150,6 +152,7 @@ int testUnTransbordo(int (*tipo)(), int v) {
   nTask vehiculoTask= nEmitTask(tipo, v); /* vehiculo v */
   Viaje *viaje= esperarTransbordo();
   int i= viaje->i; /* el transbordador usado */
+  nPrintf("%d\n", viaje->v);
   if (viaje->v!=v)
     nFatalError("testUnTransbordo", "Se transborda el vehiculo incorrecto\n");
   if ( !(0<=i && i<3) )
